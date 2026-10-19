@@ -3,7 +3,7 @@ import { readFileSync } from 'fs'
 import { join } from 'path'
 import { is } from '@electron-toolkit/utils'
 
-const DEFAULT_API_BASE_URL = 'http://localhost:5001'
+const DEFAULT_API_BASE_URL = 'https://iitd-library-backend.onrender.com'
 const REFRESH_MARGIN_MS = 5 * 60 * 1000
 
 function readJson(path) {
