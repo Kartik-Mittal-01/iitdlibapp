@@ -1,0 +1,20 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>IITD Library</title>
+    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP
+         connect-src: the library API (plain HTTP only on localhost; use HTTPS/WSS elsewhere) -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' http://localhost:* ws://localhost:* http://127.0.0.1:* ws://127.0.0.1:* https: wss:"
+    />
+    <!-- Sets data-theme before first paint (no flash of the wrong theme). -->
+    <script src="./theme-init.js"></script>
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

@@ -1,0 +1,471 @@
+/* CommonApp layout (builds on @shared/ui/theme.css). */
+
+/* Dark theme: CommonApp only. Redefines the shared design tokens; the gate
+   kiosks never set data-theme, so they always use the light tokens. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #0b0b0c;
+  --surface: #141416;
+  --ink: #f4f4f5;
+  --ink-2: #d4d4d8;
+  --muted: #a1a1aa;
+  --faint: #71717a;
+  --line: #27272a;
+  --line-strong: #3f3f46;
+  --fill: #1c1c1f;
+  --fill-strong: #2a2a2e;
+  --ok: #4ade80;
+  --on-ink: #0a0a0a;
+  --map-free-bg: #166534;
+  --map-free-line: #4ade80;
+  --map-free-text: #f0fdf4;
+  --map-free-hover: #15803d;
+  --map-full-bg: #7f1d1d;
+  --map-full-line: #f87171;
+  --map-full-text: #fef2f2;
+  --map-unknown-bg: #27272a;
+  --map-unknown-line: #52525b;
+}
+
+.app {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template-rows: 56px minmax(0, 1fr);
+  background: var(--bg);
+}
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+.brand {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+  color: var(--ink);
+  text-decoration: none;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  font-size: 15px;
+}
+.brand small {
+  font-weight: 400;
+  color: var(--muted);
+  font-size: 13px;
+}
+.app-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  min-width: 0;
+}
+.app-main {
+  min-height: 0;
+  overflow: auto;
+}
+.page {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 28px 24px 40px;
+  display: grid;
+  gap: 20px;
+}
+.page-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.page-head h1 {
+  font-size: 22px;
+}
+.page-head p {
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 20px;
+  min-width: 0;
+}
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.panel-head h2 {
+  font-size: 15px;
+}
+.kv {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px 20px;
+  margin: 0;
+  font-size: 13px;
+}
+.kv dt {
+  color: var(--muted);
+}
+.kv dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Landing */
+.landing {
+  min-height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 40px 24px;
+}
+.landing-inner {
+  width: min(720px, 100%);
+  display: grid;
+  gap: 32px;
+  animation: fade-in 220ms var(--ease);
+}
+.landing-inner h1 {
+  font-size: 28px;
+}
+.landing-inner > div > p {
+  color: var(--muted);
+  margin-top: 6px;
+}
+.role-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+.role-card {
+  display: grid;
+  gap: 8px;
+  padding: 24px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+  transition:
+    border-color 120ms var(--ease),
+    background 120ms var(--ease);
+}
+.role-card:hover {
+  border-color: var(--ink);
+}
+.role-card strong {
+  font-size: 18px;
+  display: flex;
+  justify-content: space-between;
+}
+.role-card span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* Auth */
+.auth {
+  min-height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 32px 24px;
+}
+.auth-card {
+  width: min(440px, 100%);
+  display: grid;
+  gap: 20px;
+}
+.auth-card h1 {
+  font-size: 22px;
+}
+.form {
+  display: grid;
+  gap: 14px;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.segmented {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.segmented button {
+  height: 34px;
+  border: 0;
+  background: var(--surface);
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+}
+.segmented button.is-on {
+  background: var(--ink);
+  color: var(--on-ink);
+}
+
+/* Student */
+.student-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.student-side {
+  display: grid;
+  gap: 20px;
+}
+.visit-state {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.hold-clock {
+  font-size: 32px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.map-panel {
+  display: grid;
+  gap: 14px;
+}
+.map-frame {
+  height: clamp(320px, calc(100vh - 260px), 760px);
+  min-height: 0;
+}
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px;
+}
+.stat {
+  display: grid;
+}
+.stat strong {
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+}
+.stat span {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Staff console */
+.console {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  min-height: 100%;
+}
+.side-nav {
+  border-right: 1px solid var(--line);
+  background: var(--surface);
+  padding: 16px 12px;
+  display: grid;
+  align-content: start;
+  gap: 2px;
+}
+.side-nav button {
+  text-align: left;
+  height: 34px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  cursor: pointer;
+}
+.side-nav button:hover {
+  background: var(--fill);
+}
+.side-nav button.is-on {
+  background: var(--ink);
+  color: var(--on-ink);
+}
+.side-nav-label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 4px 12px 8px;
+}
+.console-main {
+  min-width: 0;
+}
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: end;
+}
+.toolbar .field {
+  font-weight: 400;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+}
+.data {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.data th,
+.data td {
+  text-align: left;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.data th {
+  font-weight: 500;
+  color: var(--muted);
+  background: var(--bg);
+  font-size: 12px;
+}
+.data tr:last-child td {
+  border-bottom: 0;
+}
+.data td.clip {
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.data td.wrap {
+  white-space: normal;
+  min-width: 200px;
+}
+.empty {
+  padding: 32px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+.pager {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+  font-size: 13px;
+  color: var(--muted);
+}
+.secret {
+  font-family: var(--mono);
+  word-break: break-all;
+  background: var(--fill);
+  padding: 10px;
+  border-radius: var(--radius);
+  font-size: 12px;
+  margin: 8px 0;
+}
+.row-actions {
+  display: flex;
+  gap: 6px;
+}
+
+@media (max-width: 1100px) {
+  .student-grid {
+    grid-template-columns: 1fr;
+  }
+  .console {
+    grid-template-columns: 180px minmax(0, 1fr);
+  }
+}
+
+/* Theme toggle */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color 120ms var(--ease);
+}
+.theme-toggle:hover {
+  border-color: var(--ink);
+}
+.theme-toggle svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Landing logo */
+.landing-brand {
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  text-align: center;
+}
+.landing-logo {
+  width: 112px;
+  height: 112px;
+  object-fit: contain;
+  display: block;
+}
+.landing-brand p {
+  color: var(--muted);
+}
+
+/* Registration OTP step */
+.otp-input {
+  font-family: var(--mono);
+  font-size: 22px;
+  letter-spacing: 0.4em;
+  text-align: center;
+  height: 48px;
+}
+.otp-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.link-btn {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--ink);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.link-btn:disabled {
+  color: var(--faint);
+  text-decoration: none;
+  cursor: default;
+}
+.success-panel {
+  display: grid;
+  gap: 14px;
+  justify-items: start;
+}
