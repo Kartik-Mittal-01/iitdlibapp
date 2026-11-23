@@ -12,7 +12,15 @@ process.env.STUDENT_EMAIL_DOMAINS = 'iitd.ac.in'
 process.env.STUDENT_EMAIL_ALLOW_SUBDOMAINS = 'true'
 // Tests must never send real email, whatever server/.env contains. Defining these
 // (even empty) stops dotenv from loading the real SMTP settings.
-for (const key of ['SMTP_HOST', 'SMTP_PORT', 'SMTP_SECURE', 'SMTP_USER', 'SMTP_PASS', 'SMTP_FROM']) {
+for (const key of [
+  'SMTP_HOST',
+  'SMTP_PORT',
+  'SMTP_SECURE',
+  'SMTP_USER',
+  'SMTP_PASS',
+  'SMTP_FROM',
+  'BREVO_API_KEY'
+]) {
   process.env[key] = ''
 }
 

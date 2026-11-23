@@ -2,11 +2,72 @@ const nodemailer = require('nodemailer')
 const { config } = require('../config/env')
 const AppError = require('../utils/AppError')
 
+const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email'
+const BREVO_TIMEOUT_MS = 20000
+
 let transport = null
 let injected = false
 
+/** 'brevo' (HTTPS API) when BREVO_API_KEY is set, otherwise 'smtp'. */
+function provider() {
+  return config.brevo.apiKey ? 'brevo' : 'smtp'
+}
+
 function isConfigured() {
-  return Boolean(config.smtp.host && config.smtp.from)
+  return Boolean((config.brevo.apiKey || config.smtp.host) && config.smtp.from)
+}
+
+// "Name <email@x>" or a bare "email@x" -> Brevo's { name?, email }.
+function parseAddress(value) {
+  const m = /^\s*"?([^"<]*?)"?\s*<([^>]+)>\s*$/.exec(String(value || ''))
+  if (!m) return { email: String(value || '').trim() }
+  const name = m[1].trim()
+  return name ? { name, email: m[2].trim() } : { email: m[2].trim() }
+}
+
+/**
+ * Brevo transactional email API, exposed with the same sendMail() shape as a
+ * nodemailer transport so send() and its error handling stay unchanged.
+ * Errors carry only a code and a short reason; the API key is never included.
+ */
+function createBrevoTransport(apiKey, { fetchImpl = fetch, timeoutMs = BREVO_TIMEOUT_MS } = {}) {
+  return {
+    async sendMail({ from, to, subject, text, html }) {
+      let res
+      try {
+        res = await fetchImpl(BREVO_API_URL, {
+          method: 'POST',
+          headers: {
+            'api-key': apiKey,
+            accept: 'application/json',
+            'content-type': 'application/json'
+          },
+          body: JSON.stringify({
+            sender: parseAddress(from),
+            to: [{ email: to }],
+            subject,
+            textContent: text,
+            htmlContent: html
+          }),
+          signal: AbortSignal.timeout(timeoutMs)
+        })
+      } catch (err) {
+        const timedOut = err?.name === 'TimeoutError' || err?.name === 'AbortError'
+        throw Object.assign(
+          new Error(timedOut ? 'Brevo API request timed out' : 'Could not reach the Brevo API'),
+          { code: timedOut ? 'ETIMEDOUT' : 'ECONNECTION' }
+        )
+      }
+      const body = await res.json().catch(() => null)
+      if (!res.ok) {
+        const reason = typeof body?.message === 'string' ? `: ${body.message.slice(0, 200)}` : ''
+        throw Object.assign(new Error(`Brevo API rejected the message (HTTP ${res.status}${reason})`), {
+          code: typeof body?.code === 'string' ? body.code : `HTTP_${res.status}`
+        })
+      }
+      return { messageId: body?.messageId, rejected: [] }
+    }
+  }
 }
 
 /** Throws EMAIL_NOT_CONFIGURED unless messages can actually be sent. */
@@ -16,7 +77,7 @@ function assertConfigured() {
     throw new AppError(
       503,
       'EMAIL_NOT_CONFIGURED',
-      'Email delivery is not configured on the server. An administrator must set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS and SMTP_FROM in server/.env.'
+      'Email delivery is not configured on the server. An administrator must set SMTP_FROM and either BREVO_API_KEY or SMTP_HOST, SMTP_PORT, SMTP_USER and SMTP_PASS.'
     )
   }
 }
@@ -27,6 +88,10 @@ function getTransport() {
   // Backstop: an automated test run never opens a real SMTP connection.
   if (config.isTest) {
     throw new AppError(503, 'EMAIL_NOT_CONFIGURED', 'Real email delivery is disabled in tests.')
+  }
+  if (provider() === 'brevo') {
+    transport = createBrevoTransport(config.brevo.apiKey)
+    return transport
   }
   transport = nodemailer.createTransport({
     host: config.smtp.host,
@@ -76,4 +141,4 @@ async function send({ to, subject, text, html }) {
   }
 }
 
-module.exports = { send, isConfigured, assertConfigured, setTransport }
+module.exports = { send, isConfigured, assertConfigured, setTransport, provider, createBrevoTransport }

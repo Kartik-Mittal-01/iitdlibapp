@@ -16,8 +16,10 @@ async function main() {
 
   if (!mailService.isConfigured()) {
     console.warn(
-      'SMTP is not configured: student registration OTP emails cannot be sent (set SMTP_* in server/.env).'
+      'Email is not configured: student registration OTP emails cannot be sent (set SMTP_FROM and BREVO_API_KEY or SMTP_*).'
     )
+  } else {
+    console.log(`Email delivery: ${mailService.provider() === 'brevo' ? 'Brevo HTTPS API' : 'SMTP'}`)
   }
 
   const app = createApp()

@@ -63,7 +63,13 @@ const config = {
         : bool(process.env.SMTP_SECURE, false),
     user: process.env.SMTP_USER || '',
     pass: process.env.SMTP_PASS || '',
+    // Sender for every transport (SMTP or Brevo API), e.g. "Library <library@example.com>".
     from: process.env.SMTP_FROM || ''
+  },
+  // Brevo transactional email over HTTPS. When set, it is used instead of SMTP
+  // (hosts such as Render Free block outbound SMTP ports).
+  brevo: {
+    apiKey: process.env.BREVO_API_KEY || ''
   },
 
   bcryptRounds: int(process.env.BCRYPT_ROUNDS, 12),

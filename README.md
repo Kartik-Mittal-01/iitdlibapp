@@ -126,10 +126,11 @@ Colours change live through the existing `map:updated` / `occupancy:updated` Soc
 | `CORS_ALLOW_NULL_ORIGIN` | | `true` | Packaged Electron apps load from `file://` (fetch sends `Origin: null`, WebSocket sends `file://`) |
 | `STUDENT_EMAIL_DOMAINS` | | `iitd.ac.in` | Allowed registration email domains (comma-separated) |
 | `STUDENT_EMAIL_ALLOW_SUBDOMAINS` | | `true` | Also allow e.g. `cse.iitd.ac.in` |
-| `SMTP_HOST` / `SMTP_PORT` | for registration | — / `587` | SMTP server for registration OTP emails |
+| `BREVO_API_KEY` | for registration (or SMTP) | — | Sends OTP emails through Brevo's HTTPS API instead of SMTP. When set, the other `SMTP_*` settings except `SMTP_FROM` are ignored. Use it where outbound SMTP ports are blocked (Render Free) |
+| `SMTP_HOST` / `SMTP_PORT` | for registration, if no `BREVO_API_KEY` | — / `587` | SMTP server for registration OTP emails |
 | `SMTP_SECURE` | | from port | `true` = implicit TLS (465); otherwise STARTTLS when offered |
 | `SMTP_USER` / `SMTP_PASS` | if the server needs auth | — | SMTP login (e.g. a Gmail App Password) |
-| `SMTP_FROM` | for registration | — | Sender, e.g. `"IIT Delhi Central Library <library@iitd.ac.in>"` |
+| `SMTP_FROM` | for registration | — | Sender for both SMTP and Brevo, e.g. `"IIT Delhi Central Library <library@iitd.ac.in>"`. With Brevo it must be a verified sender |
 | `RATE_LIMIT_OTP_REQUEST_MAX` / `RATE_LIMIT_OTP_VERIFY_MAX` | | `10` / `30` | OTP requests / checks per IP per 15 minutes |
 | `STUDENT_TOKEN_TTL` / `STAFF_TOKEN_TTL` / `TERMINAL_TOKEN_TTL` | | `12h` / `8h` / `12h` | Token lifetimes |
 | `SCAN_TOKEN_TTL_SECONDS` | | `120` | Time a student has at the kiosk after tapping |
