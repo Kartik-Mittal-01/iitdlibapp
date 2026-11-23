@@ -15,8 +15,17 @@ const { Seat, LibrarySession, LibraryTable, Student } = require('../models')
 const { withAtomic, opts } = require('../db/connect')
 const clock = require('./clock')
 const audit = require('./auditService')
+const occupancyService = require('./occupancyService')
 const AppError = require('../utils/AppError')
-const { SEAT_STATUS, SESSION_STATUS, HOLD_DURATION_MS, EXIT_MODES } = require('../shared')
+const {
+  SEAT_STATUS,
+  SESSION_STATUS,
+  HOLD_DURATION_MS,
+  EXIT_MODES,
+  holdPolicyForOccupancy
+} = require('../shared')
+
+const HOLD_MIN_MINUTES = HOLD_DURATION_MS / 60000
 
 const AFTER = { returnDocument: 'after' }
 const RECONCILE_GRACE_MS = 60 * 1000
@@ -330,7 +339,7 @@ async function admitStudent({ studentId, terminal, tableId, seatId, actor }, cha
 // Exit and hold
 // ---------------------------------------------------------------------------
 
-async function exitStudent({ studentId, terminal, mode, actor }, changes) {
+async function exitStudent({ studentId, terminal, mode, holdMinutes, actor }, changes) {
   const now = clock.now()
   await expireDueHolds({ studentId, now }, changes)
 
@@ -402,7 +411,14 @@ async function exitStudent({ studentId, terminal, mode, actor }, changes) {
   }
 
   if (mode === EXIT_MODES.HOLD) {
-    const holdUntil = new Date(now.getTime() + HOLD_DURATION_MS)
+    // Crowd-aware duration: the server is the sole authority, so a requested
+    // holdMinutes is only ever a ceiling-bound hint. No request (or a request
+    // outside the allowed range) falls back to the standard 15-minute hold.
+    const { capacity, occupied, reserved } = await occupancyService.getCounts()
+    const policy = holdPolicyForOccupancy(occupied + reserved, capacity)
+    const requestedMinutes = Number.isFinite(holdMinutes) ? holdMinutes : HOLD_MIN_MINUTES
+    const minutes = Math.min(Math.max(requestedMinutes, HOLD_MIN_MINUTES), policy.maxHoldMinutes)
+    const holdUntil = new Date(now.getTime() + minutes * 60000)
     const result = await withAtomic(async (session) => {
       const held = await LibrarySession.findOneAndUpdate(
         { _id: open._id, status: SESSION_STATUS.INSIDE },
@@ -451,9 +467,9 @@ async function exitStudent({ studentId, terminal, mode, actor }, changes) {
       studentId,
       sessionId: held._id,
       terminalCode: terminal.terminalCode,
-      details: { seatCode: seat.seatCode, holdUntil }
+      details: { seatCode: seat.seatCode, holdUntil, holdMinutes: minutes, crowdLevel: policy.crowdLevel }
     })
-    return { outcome: 'hold_started', ...describe(held, seat, table) }
+    return { outcome: 'hold_started', holdMinutes: minutes, ...describe(held, seat, table) }
   }
 
   throw AppError.badRequest('VALIDATION_ERROR', 'Unknown exit mode.')

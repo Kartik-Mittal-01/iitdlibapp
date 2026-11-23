@@ -239,11 +239,11 @@ async function enter(term, cardUid, choice) {
   return entry(term, { scanToken: s.body.data.scanToken, ...choice })
 }
 
-/** Scan at an exit terminal and choose exit/hold. */
-async function leave(term, cardUid, mode) {
+/** Scan at an exit terminal and choose exit/hold (optionally requesting a hold duration). */
+async function leave(term, cardUid, mode, { holdMinutes } = {}) {
   const s = await scan(term, cardUid)
   if (s.status !== 200) return s
-  return exit(term, { scanToken: s.body.data.scanToken, mode })
+  return exit(term, { scanToken: s.body.data.scanToken, mode, ...(holdMinutes && { holdMinutes }) })
 }
 
 /** Awaits a response and asserts its status (shows the body on failure). */

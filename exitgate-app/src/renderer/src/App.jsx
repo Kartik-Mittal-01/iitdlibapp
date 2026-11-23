@@ -57,7 +57,7 @@ function reducer(state, a) {
       return { ...initial, seq: state.seq, phase: 'error', message: a.message }
     case 'SUBMIT':
       if (a.seq !== state.seq || state.phase !== 'choosing') return state
-      return { ...state, phase: 'submitting', mode: a.mode }
+      return { ...state, phase: 'submitting', mode: a.mode, holdMinutes: a.holdMinutes }
     case 'SUCCEEDED':
       if (a.seq !== state.seq || state.phase !== 'submitting') return state
       return { ...state, phase: 'success', result: a.result }
@@ -134,12 +134,16 @@ export default function App() {
     return () => socket.off(SOCKET_EVENTS.GATE_RESULT, onGate)
   }, [socket])
 
-  async function choose(mode) {
+  async function choose(mode, holdMinutes) {
     if (phase !== 'choosing' || submittedSeq.current === seq) return
     submittedSeq.current = seq
-    dispatch({ type: 'SUBMIT', seq, mode })
+    dispatch({ type: 'SUBMIT', seq, mode, holdMinutes })
     try {
-      const result = await api.post('/api/gate/exit', { scanToken: state.scan.scanToken, mode })
+      const result = await api.post('/api/gate/exit', {
+        scanToken: state.scan.scanToken,
+        mode,
+        ...(holdMinutes && { holdMinutes })
+      })
       dispatch({ type: 'SUCCEEDED', seq, result })
     } catch (err) {
       dispatch({ type: 'FAILED', seq, message: err.message })
@@ -147,7 +151,11 @@ export default function App() {
   }
 
   const problem = terminalProblem(config, authError)
-  const holdMinutes = state.scan?.holdDurationMinutes || HOLD_DURATION_MS / 60000
+  // The server computes this fresh per scan from current occupancy (shared
+  // libraryStates.mjs holdPolicyForOccupancy); a crowded library reports a
+  // single 15-minute option and the picker below collapses to one button.
+  const holdPolicy = state.scan?.holdPolicy
+  const holdOptions = holdPolicy?.options?.length ? holdPolicy.options : [HOLD_DURATION_MS / 60000]
 
   return (
     <div className="kiosk">
@@ -167,18 +175,46 @@ export default function App() {
             <p className="kiosk-title">Seat {state.scan.visit?.seatCode}. How are you leaving?</p>
           </div>
           <div className="choices">
-            <button
-              className="choice"
-              disabled={phase === 'submitting'}
-              onClick={() => choose(EXIT_MODES.HOLD)}
-            >
-              <span className="choice-title">
-                {phase === 'submitting' && state.mode === EXIT_MODES.HOLD
-                  ? 'Holding…'
-                  : `Hold — ${holdMinutes} minutes`}
-              </span>
-              <span className="choice-sub">Keep my seat for a short break</span>
-            </button>
+            {holdOptions.length > 1 ? (
+              <div className="choice choice-hold">
+                <span className="choice-title">Hold my seat</span>
+                <span className="choice-sub">
+                  {holdPolicy?.crowdLevel === 'high'
+                    ? 'Keep my seat for a short break'
+                    : 'Library is quiet — choose how long'}
+                </span>
+                <div className="hold-options">
+                  {holdOptions.map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      className="hold-chip"
+                      disabled={phase === 'submitting'}
+                      onClick={() => choose(EXIT_MODES.HOLD, m)}
+                    >
+                      {phase === 'submitting' &&
+                      state.mode === EXIT_MODES.HOLD &&
+                      state.holdMinutes === m
+                        ? 'Holding…'
+                        : `${m} min`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <button
+                className="choice"
+                disabled={phase === 'submitting'}
+                onClick={() => choose(EXIT_MODES.HOLD, holdOptions[0])}
+              >
+                <span className="choice-title">
+                  {phase === 'submitting' && state.mode === EXIT_MODES.HOLD
+                    ? 'Holding…'
+                    : `Hold — ${holdOptions[0]} minutes`}
+                </span>
+                <span className="choice-sub">Keep my seat for a short break</span>
+              </button>
+            )}
             <button
               className="choice choice-primary"
               disabled={phase === 'submitting'}
@@ -209,7 +245,7 @@ export default function App() {
         </div>
       )}
 
-      {phase === 'success' && <Success result={state.result} holdMinutes={holdMinutes} />}
+      {phase === 'success' && <Success result={state.result} />}
 
       {phase === 'error' && (
         <div className="kiosk-center" role="alert">
@@ -236,8 +272,11 @@ export default function App() {
   )
 }
 
-function Success({ result, holdMinutes }) {
+function Success({ result }) {
   const hold = result.outcome === 'hold_started'
+  // The server decides (and may clamp) the granted duration; always display
+  // what it actually returned, never what was requested.
+  const minutes = result.holdMinutes || HOLD_DURATION_MS / 60000
   return (
     <div className="kiosk-center" role="status">
       <SuccessTick />
@@ -247,7 +286,7 @@ function Success({ result, holdMinutes }) {
         </p>
         <p className="kiosk-sub">
           {hold
-            ? `Seat ${result.seat?.seatCode} is held for ${holdMinutes} minutes, until ${formatTime(result.session?.holdUntil)}.`
+            ? `Seat ${result.seat?.seatCode} is held for ${minutes} minutes, until ${formatTime(result.session?.holdUntil)}.`
             : `Exit recorded. Seat ${result.seat?.seatCode} has been released.`}
         </p>
       </div>

@@ -15,6 +15,7 @@
 
 const { GateScan, RFIDCard, Student, LibrarySession, Seat } = require('../models')
 const visitService = require('./visitService')
+const occupancyService = require('./occupancyService')
 const audit = require('./auditService')
 const clock = require('./clock')
 const publisher = require('../realtime/publisher')
@@ -27,7 +28,6 @@ const {
   SESSION_STATUS,
   SEAT_STATUS,
   EXIT_MODES,
-  HOLD_DURATION_MS,
   errorMessage
 } = require('../shared')
 
@@ -184,6 +184,10 @@ async function processScan({ terminal, cardUid, requestId }, changes) {
   )
   const token = randomToken()
   const expiresAt = new Date(now.getTime() + config.scanTokenTtlSeconds * 1000)
+  // Computed fresh per scan so the kiosk always shows the current crowd-based
+  // ceiling; the server re-checks and clamps again at /api/gate/exit time.
+  const holdPolicy =
+    nextAction === GATE_NEXT_ACTION.CHOOSE_EXIT ? await occupancyService.getHoldPolicy() : undefined
   const payload = {
     ...base,
     accepted: true,
@@ -192,7 +196,7 @@ async function processScan({ terminal, cardUid, requestId }, changes) {
     visit: await visitSummary(open),
     exitOptions:
       nextAction === GATE_NEXT_ACTION.CHOOSE_EXIT ? [EXIT_MODES.EXIT, EXIT_MODES.HOLD] : undefined,
-    holdDurationMinutes: HOLD_DURATION_MS / 60000
+    holdPolicy
   }
   const stored = await storeScanRecord({
     tokenHash: sha256(token),
@@ -296,7 +300,7 @@ async function completeEntry({ terminal, scanToken, tableId, seatId }, changes) 
   }
 }
 
-async function completeExit({ terminal, scanToken, mode }, changes) {
+async function completeExit({ terminal, scanToken, mode, holdMinutes }, changes) {
   if (terminal.gateType !== GATE_TYPES.EXIT) throw AppError.forbidden('SCAN_WRONG_GATE')
   const claim = await claimScan({ terminal, scanToken, gateType: GATE_TYPES.EXIT })
   if (claim.replay) return { ...claim.replay, replayed: true }
@@ -304,7 +308,7 @@ async function completeExit({ terminal, scanToken, mode }, changes) {
   try {
     // A revoked card may still leave the building; exit is not blocked on card status.
     const result = await visitService.exitStudent(
-      { studentId: scan.studentId, terminal, mode, actor: terminalActor(terminal) },
+      { studentId: scan.studentId, terminal, mode, holdMinutes, actor: terminalActor(terminal) },
       changes
     )
     const student = await Student.findById(scan.studentId).lean()

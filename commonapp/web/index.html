@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>IITD Library</title>
+    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP
+         This is the plain-web build (see ../src/renderer/index.html for the
+         Electron renderer's tighter, localhost-only CSP). A deployed static
+         site has no "localhost" backend and no attacker-controlled URLs (the
+         API base is a build-time constant, see VITE_API_BASE_URL in the
+         README), so connect-src is relaxed to any http/https/ws/wss origin —
+         this also lets the dev server be reached and used from a phone over
+         the LAN by plain HTTP. Deployed servers must still use HTTPS. -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' http: https: ws: wss:"
+    />
+    <script src="/theme-init.js"></script>
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <script type="module" src="../src/renderer/src/main.jsx"></script>
+  </body>
+</html>

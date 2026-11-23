@@ -61,6 +61,7 @@ function createApp() {
   app.use('/api/admin', require('./routes/admin.routes'))
   app.use('/api/gate', require('./routes/gate.routes'))
   app.use('/api/library', require('./routes/library.routes'))
+  app.use('/api/community', require('./routes/community.routes'))
 
   app.use(notFound)
   app.use(errorHandler)

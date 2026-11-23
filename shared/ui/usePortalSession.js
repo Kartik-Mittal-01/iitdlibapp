@@ -19,12 +19,24 @@ function writeStored(key, value) {
   }
 }
 
-/** API base URL from the Electron main process (configurable at runtime). */
+// Same default the Electron main process falls back to (commonapp/src/main/appConfig.js),
+// so the plain-web build works out of the box against the deployed backend.
+const DEFAULT_API_BASE_URL = 'https://iitd-library-backend.onrender.com'
+
+/**
+ * API base URL. In the Electron app this comes from the main process
+ * (configurable at runtime without a rebuild, see appConfig.js). The plain-web
+ * build has no main process, so it falls back to a Vite build-time env var
+ * (VITE_API_BASE_URL) and, failing that, the same production default.
+ */
 export function useApiBaseUrl() {
   const [baseUrl, setBaseUrl] = useState(null)
   useEffect(() => {
     let cancelled = false
-    window.api.getConfig().then((c) => !cancelled && setBaseUrl(c.apiBaseUrl))
+    const resolve = window.api?.getConfig
+      ? window.api.getConfig().then((c) => c.apiBaseUrl)
+      : Promise.resolve(import.meta.env.VITE_API_BASE_URL || DEFAULT_API_BASE_URL)
+    resolve.then((url) => !cancelled && setBaseUrl(url))
     return () => {
       cancelled = true
     }

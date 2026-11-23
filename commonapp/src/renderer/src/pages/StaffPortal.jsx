@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { SOCKET_EVENTS } from '@shared/libraryStates.mjs'
+import { SOCKET_EVENTS, COMMUNITY_CATEGORIES, communityCategoryLabel } from '@shared/libraryStates.mjs'
 import { GRID } from '@shared/libraryLayout.mjs'
 import { usePortalSession } from '@shared/ui/usePortalSession'
 import { useAsync } from '@shared/ui/useAsync'
@@ -14,7 +14,8 @@ const SECTIONS = [
   ['students', 'Students'],
   ['cards', 'RFID cards'],
   ['terminals', 'Gate terminals'],
-  ['tables', 'Tables']
+  ['tables', 'Tables'],
+  ['community', 'Community']
 ]
 
 export default function StaffPortal() {
@@ -145,6 +146,7 @@ function Console({ portal }) {
           {section === 'cards' && <CardsSection api={api} />}
           {section === 'terminals' && <TerminalsSection api={api} isAdmin={isAdmin} />}
           {section === 'tables' && <TablesSection api={api} isAdmin={isAdmin} />}
+          {section === 'community' && <CommunitySection api={api} />}
         </div>
       </div>
     </div>
@@ -846,6 +848,94 @@ function TablesSection({ api, isAdmin }) {
           }
         ]}
       />
+    </>
+  )
+}
+
+function CommunitySection({ api }) {
+  const f = useFilters({ category: '', q: '' })
+  const paged = usePaged(api, '/api/community/posts', f.applied)
+  const [actionError, setActionError] = useState(null)
+  const [busyId, setBusyId] = useState(null)
+
+  async function remove(post) {
+    if (!window.confirm(`Delete "${post.title}"? This cannot be undone.`)) return
+    setActionError(null)
+    setBusyId(post.id)
+    try {
+      await api.delete(`/api/community/posts/${post.id}`)
+      paged.reload()
+    } catch (err) {
+      setActionError(err)
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  return (
+    <>
+      <Head
+        title="Community"
+        description="Student-posted requests and offers. Removing a post also removes its comments."
+      />
+      <FilterBar
+        onApply={() => {
+          paged.setPage(1)
+          f.apply()
+        }}
+      >
+        <label className="field">
+          Category
+          <select {...f.bind('category')}>
+            <option value="">Any</option>
+            {COMMUNITY_CATEGORIES.map((c) => (
+              <option key={c.key} value={c.key}>
+                {c.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="field">
+          Search
+          <input {...f.bind('q')} style={{ width: 220 }} />
+        </label>
+      </FilterBar>
+      <ErrorAlert error={paged.error || actionError} />
+      <DataTable
+        rows={paged.data?.items}
+        loading={!paged.error}
+        empty="No community posts match these filters."
+        columns={[
+          {
+            label: 'Title',
+            wrap: true,
+            render: (r) => (
+              <a className="link-btn" href={`#/community/${r.id}`} target="_blank" rel="noreferrer">
+                {r.title}
+              </a>
+            )
+          },
+          { label: 'Category', render: (r) => communityCategoryLabel(r.category) },
+          { label: 'Author', render: (r) => studentLabel(r.author) },
+          { label: 'Status', render: (r) => <StatusBadge value={r.status} /> },
+          { label: 'Interested', render: (r) => r.interestedCount },
+          { label: 'Comments', render: (r) => r.commentCount },
+          { label: 'Posted', render: (r) => formatDateTime(r.createdAt) },
+          {
+            label: '',
+            render: (r) => (
+              <button
+                className="btn btn-outline btn-sm"
+                disabled={busyId === r.id}
+                onClick={() => remove(r)}
+              >
+                Delete
+              </button>
+            )
+          }
+        ]}
+      />
+      <Pager data={paged.data} page={paged.page} setPage={paged.setPage} />
     </>
   )
 }

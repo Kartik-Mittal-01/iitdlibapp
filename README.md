@@ -24,6 +24,8 @@ The apps import shared code through the `@shared` alias (`electron.vite.config.m
 
 ## Quick start (development)
 
+> **New here, or on Windows?** Follow **[SETUP.md](SETUP.md)**: a step-by-step guide to run the server, all three apps and MongoDB locally, plus an end-to-end smoke-test checklist. Note that the apps default to the deployed backend; SETUP.md §3 shows how to point them at `http://localhost:5001`.
+
 Prerequisites: Node.js ≥ 20.19 (tested on 24), npm, MongoDB ≥ 6. A replica set (or Atlas) is recommended because it enables transactions. A standalone server also works; see [Consistency](#consistency-transactions-and-crash-recovery).
 
 ```bash

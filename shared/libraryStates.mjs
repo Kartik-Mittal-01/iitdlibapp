@@ -60,6 +60,33 @@ export function seatColor(status) {
 
 export const HOLD_DURATION_MS = 15 * 60 * 1000
 
+// Crowd-aware hold policy: the fuller the library, the shorter the max hold a
+// student may choose at the exit gate. Ratio = (occupied + reserved) seats /
+// capacity. The lowest tier (>= 90% full) keeps today's fixed 15-minute hold.
+// Pure function, shared by the server (which decides and clamps) and the
+// frontends (which render the options the server reports).
+export const HOLD_POLICY_TIERS = Object.freeze([
+  { minOccupancyRatio: 0.9, maxHoldMinutes: 15, crowdLevel: 'high' },
+  { minOccupancyRatio: 0.7, maxHoldMinutes: 30, crowdLevel: 'moderate' },
+  { minOccupancyRatio: 0.4, maxHoldMinutes: 45, crowdLevel: 'low' },
+  { minOccupancyRatio: 0, maxHoldMinutes: 60, crowdLevel: 'very_low' }
+])
+
+export const HOLD_DURATION_OPTIONS_MINUTES = Object.freeze([15, 30, 45, 60])
+
+export function holdPolicyForOccupancy(takenSeats, capacity) {
+  const ratio = capacity > 0 ? takenSeats / capacity : 1
+  const tier =
+    HOLD_POLICY_TIERS.find((t) => ratio >= t.minOccupancyRatio) ||
+    HOLD_POLICY_TIERS[HOLD_POLICY_TIERS.length - 1]
+  return {
+    occupancyRatio: ratio,
+    crowdLevel: tier.crowdLevel,
+    maxHoldMinutes: tier.maxHoldMinutes,
+    options: HOLD_DURATION_OPTIONS_MINUTES.filter((m) => m <= tier.maxHoldMinutes)
+  }
+}
+
 export const GATE_TYPES = Object.freeze({ ENTRY: 'entry', EXIT: 'exit' })
 
 // What the gate UI should do after a scan has been accepted by the server.
@@ -123,7 +150,11 @@ export const ERROR_MESSAGES = Object.freeze({
   STATE_CHANGED: 'Your visit changed while this was processing. Please tap your card again.',
   TERMINAL_UNAUTHORIZED: 'This gate terminal is not authorised.',
   SERVICE_UNAVAILABLE: 'The library service is temporarily unavailable.',
-  INTERNAL_ERROR: 'Something went wrong. Please try again.'
+  INTERNAL_ERROR: 'Something went wrong. Please try again.',
+  POST_NOT_FOUND: 'That post no longer exists.',
+  COMMENT_NOT_FOUND: 'That comment no longer exists.',
+  NOT_POST_AUTHOR: 'Only the author can do that.',
+  OWN_POST_INTEREST: 'You cannot mark interest on your own post.'
 })
 
 export function errorMessage(code, fallback) {
@@ -133,3 +164,46 @@ export function errorMessage(code, fallback) {
 // Logical size of the library floor plan; table/seat coordinates use this space.
 // Matches the reference layout grid in libraryLayout.mjs (22 x 100, 29 x 40).
 export const MAP_CANVAS = Object.freeze({ width: 2200, height: 1160 })
+
+// Community board categories: shared by the server (validation) and CommonApp
+// (category grid, filters, labels). Order here is the display order.
+export const COMMUNITY_CATEGORIES = Object.freeze([
+  Object.freeze({
+    key: 'academic_help',
+    label: 'Academic Help',
+    blurb: 'Notes, doubts, PYQs'
+  }),
+  Object.freeze({
+    key: 'collaborate',
+    label: 'Collaborate',
+    blurb: 'Find project teammates'
+  }),
+  Object.freeze({
+    key: 'resource_exchange',
+    label: 'Resource Exchange',
+    blurb: 'Share, borrow, exchange'
+  }),
+  Object.freeze({
+    key: 'campus_help',
+    label: 'Campus Help',
+    blurb: 'Everyday student needs'
+  }),
+  Object.freeze({
+    key: 'opportunities',
+    label: 'Opportunities',
+    blurb: 'Research, internships'
+  }),
+  Object.freeze({
+    key: 'knowledge_hub',
+    label: 'Knowledge Hub',
+    blurb: 'Student-curated guides'
+  })
+])
+
+export const COMMUNITY_CATEGORY_KEYS = Object.freeze(COMMUNITY_CATEGORIES.map((c) => c.key))
+
+export const COMMUNITY_POST_STATUSES = Object.freeze(['open', 'resolved'])
+
+export function communityCategoryLabel(key) {
+  return COMMUNITY_CATEGORIES.find((c) => c.key === key)?.label || key
+}

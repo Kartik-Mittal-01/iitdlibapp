@@ -235,6 +235,49 @@ describe('entry, exit and hold business rules', () => {
     assert.equal(again.body.error.code, 'ALREADY_ON_HOLD')
   })
 
+  test('a quiet library grants a requested longer hold in full', async () => {
+    // tA (2 seats) + tB (4 seats) = 6 capacity; only this one student is seated,
+    // so occupancy is ~17% -> the "very_low" tier (max 60 minutes).
+    const { cardUid } = await h.createStudentWithCard()
+    await h.enter(entryGate, cardUid, { tableId: tA.table._id })
+    const holdStart = h.now()
+
+    const x = await h.must(h.leave(exitGate, cardUid, 'hold', { holdMinutes: 45 }), 200)
+    assert.equal(x.body.data.holdMinutes, 45)
+    const expected = new Date(holdStart.getTime() + 45 * MIN).toISOString()
+    assert.equal(x.body.data.session.holdUntil, expected)
+  })
+
+  test('a requested hold above the current policy ceiling is clamped down, not rejected', async () => {
+    const { cardUid } = await h.createStudentWithCard()
+    await h.enter(entryGate, cardUid, { tableId: tA.table._id })
+    const holdStart = h.now()
+
+    // At ~17% occupancy the ceiling is 60 minutes, so a 120-minute request is
+    // clamped to 60 rather than failing.
+    const x = await h.must(h.leave(exitGate, cardUid, 'hold', { holdMinutes: 120 }), 200)
+    assert.equal(x.body.data.holdMinutes, 60)
+    const expected = new Date(holdStart.getTime() + 60 * MIN).toISOString()
+    assert.equal(x.body.data.session.holdUntil, expected)
+  })
+
+  test('a near-full library clamps a requested hold down to 15 minutes', async () => {
+    const seats = [...tA.seats, ...tB.seats] // 2 + 4 = 6, the library's entire capacity here
+    let lastCardUid
+    for (const seat of seats) {
+      const occupant = await h.createStudentWithCard()
+      await h.must(h.enter(entryGate, occupant.cardUid, { seatId: seat._id }), 201)
+      lastCardUid = occupant.cardUid
+    }
+    // All 6 seats are taken (100% full) -> the "high" tier caps holds at 15 minutes
+    // regardless of what is requested.
+    const holdStart = h.now()
+    const x = await h.must(h.leave(exitGate, lastCardUid, 'hold', { holdMinutes: 45 }), 200)
+    assert.equal(x.body.data.holdMinutes, 15)
+    const expected = new Date(holdStart.getTime() + 15 * MIN).toISOString()
+    assert.equal(x.body.data.session.holdUntil, expected)
+  })
+
   test('re-entry before expiry resumes the same session and seat', async () => {
     const { student, cardUid } = await h.createStudentWithCard()
     const e = await h.enter(entryGate, cardUid, { tableId: tB.table._id })
@@ -464,6 +507,13 @@ describe('entry, exit and hold business rules', () => {
         reserved: 1,
         studentsInside: 1,
         studentsOnHold: 1,
+        // 2 of 6 seats taken (occupied + reserved) -> ~33% -> the "very_low" tier.
+        holdPolicy: {
+          occupancyRatio: 2 / 6,
+          crowdLevel: 'very_low',
+          maxHoldMinutes: 60,
+          options: [15, 30, 45, 60]
+        },
         serverTime: undefined
       }
     )

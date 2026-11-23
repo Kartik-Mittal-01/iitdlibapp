@@ -16,6 +16,9 @@ export default function StudentPortal() {
       right={
         user ? (
           <>
+            <a className="btn btn-ghost btn-sm" href="#/community">
+              Community
+            </a>
             <span className="muted">{user.name}</span>
             <button className="btn btn-outline btn-sm" onClick={portal.logout}>
               Sign out

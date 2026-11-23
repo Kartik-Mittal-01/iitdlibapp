@@ -43,6 +43,14 @@ const otpVerifyLimiter = limiter({
 
 const apiLimiter = limiter({ windowMs: 60 * 1000, limit: config.rateLimit.apiMax })
 
+// Community posts, per signed-in student (not per IP, so a shared campus NAT
+// doesn't throttle everyone together).
+const communityPostLimiter = limiter({
+  windowMs: 60 * 60 * 1000,
+  limit: config.rateLimit.communityPostMax,
+  keyGenerator: (req) => (req.principal?.id ? `student:${req.principal.id}` : ipKeyGenerator(req.ip))
+})
+
 // Applied after terminal authentication: limits each terminal, not each IP.
 const gateLimiter = limiter({
   windowMs: 60 * 1000,
@@ -57,5 +65,6 @@ module.exports = {
   otpRequestLimiter,
   otpVerifyLimiter,
   apiLimiter,
-  gateLimiter
+  gateLimiter,
+  communityPostLimiter
 }

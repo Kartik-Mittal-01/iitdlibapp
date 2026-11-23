@@ -714,3 +714,33 @@ input[type='checkbox'] {
   opacity: 0.4;
   cursor: not-allowed;
 }
+/* Crowd-aware hold duration picker (ExitGate): a non-button tile holding a
+   row of duration chips, replacing the single "Hold" button when the library
+   is quiet enough to allow more than the standard 15-minute hold. */
+.choice-hold {
+  cursor: default;
+}
+.hold-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+.hold-chip {
+  padding: 8px 16px;
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 120ms var(--ease);
+}
+.hold-chip:hover:not(:disabled) {
+  background: var(--fill);
+}
+.hold-chip:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

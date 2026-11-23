@@ -1,9 +1,10 @@
 const mongoose = require('mongoose')
 const { LibraryTable, Seat, LibrarySession } = require('../models')
 const visitService = require('./visitService')
+const occupancyService = require('./occupancyService')
 const clock = require('./clock')
 const AppError = require('../utils/AppError')
-const { MAP_CANVAS, MAP_LEGEND, SEAT_STATUS, SESSION_STATUS } = require('../shared')
+const { MAP_CANVAS, MAP_LEGEND, SEAT_STATUS, SESSION_STATUS, holdPolicyForOccupancy } = require('../shared')
 
 // Public seat view: never includes who is sitting there.
 function seatView(seat) {
@@ -44,22 +45,19 @@ async function activeTablesWithSeats() {
 }
 
 async function getOccupancy() {
-  const activeTableIds = await LibraryTable.find({ isActive: true }).distinct('_id')
-  const rows = await Seat.aggregate([
-    { $match: { tableId: { $in: activeTableIds }, isActive: true } },
-    { $group: { _id: '$status', n: { $sum: 1 } } }
-  ])
-  const counts = { available: 0, occupied: 0, reserved: 0 }
-  for (const r of rows) counts[r._id] = r.n
+  const counts = await occupancyService.getCounts()
   const [inside, onHold] = await Promise.all([
     LibrarySession.countDocuments({ status: SESSION_STATUS.INSIDE }),
     LibrarySession.countDocuments({ status: SESSION_STATUS.HOLD })
   ])
   return {
-    capacity: counts.available + counts.occupied + counts.reserved,
     ...counts,
     studentsInside: inside,
     studentsOnHold: onHold,
+    // How long a student may hold a seat right now, based on how full the
+    // library is (shared/libraryStates.mjs; applied server-side in
+    // visitService.exitStudent, never trusted from the client).
+    holdPolicy: holdPolicyForOccupancy(counts.occupied + counts.reserved, counts.capacity),
     serverTime: clock.now()
   }
 }

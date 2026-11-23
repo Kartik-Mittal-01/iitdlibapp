@@ -58,9 +58,9 @@ async function entry(req, res) {
 }
 
 async function exit(req, res) {
-  const { scanToken, mode } = req.valid.body
+  const { scanToken, mode, holdMinutes } = req.valid.body
   const result = await withChanges((changes) =>
-    gateService.completeExit({ terminal: terminalOf(req), scanToken, mode }, changes)
+    gateService.completeExit({ terminal: terminalOf(req), scanToken, mode, holdMinutes }, changes)
   )
   ok(res, result)
 }

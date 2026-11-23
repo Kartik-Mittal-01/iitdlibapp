@@ -393,6 +393,71 @@
   }
 }
 
+/* Phones. Everything above this still works down to ~360px wide; these rules
+   trade side-by-side layouts for stacked ones and shrink the chrome so the
+   content, not the frame, gets the screen. */
+@media (max-width: 640px) {
+  .app-header {
+    padding: 0 12px;
+    gap: 10px;
+  }
+  .brand {
+    font-size: 13px;
+  }
+  .page {
+    padding: 16px 14px 28px;
+    gap: 16px;
+  }
+  .page-head h1 {
+    font-size: 19px;
+  }
+  .panel {
+    padding: 14px;
+  }
+  .landing {
+    padding: 24px 16px;
+  }
+  .landing-inner h1 {
+    font-size: 22px;
+  }
+  .landing-logo {
+    width: 84px;
+    height: 84px;
+  }
+  .role-card {
+    padding: 18px;
+  }
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  /* The staff console's sidebar becomes a horizontally scrollable tab strip
+     instead of a left rail, so narrow screens don't squeeze the main content. */
+  .console {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+  .side-nav {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+    overflow-x: auto;
+    padding: 10px 12px;
+  }
+  .side-nav-label {
+    display: none;
+  }
+  .map-frame {
+    height: clamp(260px, 50vh, 480px);
+  }
+  .stats {
+    gap: 16px;
+  }
+  .toolbar {
+    gap: 8px;
+  }
+}
+
 /* Theme toggle */
 .theme-toggle {
   display: inline-flex;
@@ -468,4 +533,189 @@
   display: grid;
   gap: 14px;
   justify-items: start;
+}
+
+/* Community */
+.community-search {
+  display: flex;
+  gap: 8px;
+}
+.community-search input {
+  flex: 1;
+}
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+.category-card {
+  display: grid;
+  gap: 6px;
+  padding: 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition:
+    border-color 120ms var(--ease),
+    background 120ms var(--ease);
+}
+.category-card:hover {
+  border-color: var(--ink);
+}
+.category-card.is-on {
+  background: var(--ink);
+  color: var(--on-ink);
+  border-color: var(--ink);
+}
+.category-card.is-on span {
+  color: inherit;
+  opacity: 0.75;
+}
+.category-card strong {
+  font-size: 14px;
+}
+.category-card span {
+  font-size: 12px;
+  color: var(--muted);
+}
+.community-mine-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+  cursor: pointer;
+}
+.community-mine-toggle input {
+  height: auto;
+}
+.post-list {
+  display: grid;
+  gap: 12px;
+}
+.post-card {
+  display: grid;
+  gap: 6px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+  transition: border-color 120ms var(--ease);
+}
+.post-card:hover {
+  border-color: var(--line-strong);
+}
+.post-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.post-card-category {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.post-card-title {
+  font-size: 16px;
+}
+.post-card-snippet {
+  color: var(--muted);
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.post-card-meta {
+  display: flex;
+  gap: 14px;
+  font-size: 12px;
+  color: var(--faint);
+  margin-top: 4px;
+}
+.post-detail {
+  display: grid;
+  gap: 8px;
+}
+.post-detail-body {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin-top: 4px;
+}
+.tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+.tag {
+  font-size: 12px;
+  color: var(--muted);
+  background: var(--fill);
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+.post-contact {
+  background: var(--fill);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  font-size: 13px;
+  margin-top: 4px;
+}
+.community-textarea {
+  width: 100%;
+  min-height: 60px;
+  padding: 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  resize: vertical;
+}
+.comment-form {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.comment-form .btn {
+  justify-self: start;
+}
+.comment-list {
+  display: grid;
+  gap: 14px;
+}
+.comment {
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+.comment-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+.comment p {
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+  .category-grid {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  }
+  .post-card {
+    padding: 14px;
+  }
 }

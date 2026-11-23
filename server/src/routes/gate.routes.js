@@ -35,7 +35,14 @@ const entrySchema = z
 // service decides which case applies from server-side state.
 const entryOrResumeSchema = z.union([entrySchema, z.object({ scanToken })])
 
-const exitSchema = z.object({ scanToken, mode: z.enum([EXIT_MODES.EXIT, EXIT_MODES.HOLD]) })
+const exitSchema = z.object({
+  scanToken,
+  mode: z.enum([EXIT_MODES.EXIT, EXIT_MODES.HOLD]),
+  // Crowd-aware hold request (minutes); the server clamps this to the live
+  // policy (shared/libraryStates.mjs holdPolicyForOccupancy) regardless of
+  // what is sent here. This range is just a sanity ceiling.
+  holdMinutes: z.coerce.number().int().min(1).max(180).optional()
+})
 
 // Exchange a device key for a short-lived terminal token (kiosk apps).
 router.post('/terminal/token', authenticateTerminal(), gateLimiter, ctrl.terminalToken)

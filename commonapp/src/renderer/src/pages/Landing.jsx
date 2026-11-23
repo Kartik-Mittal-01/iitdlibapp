@@ -30,6 +30,12 @@ export default function Landing() {
               </strong>
               <span>Library desk and administration: visits, logs, cards, terminals, tables.</span>
             </a>
+            <a className="role-card" href="#/community">
+              <strong>
+                Community <span aria-hidden="true">→</span>
+              </strong>
+              <span>Ask, share and find people across IIT Delhi — notes, teammates, resources.</span>
+            </a>
           </div>
         </div>
       </div>

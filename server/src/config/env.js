@@ -40,7 +40,9 @@ const config = {
   corsOrigins: list(process.env.CORS_ORIGINS, [
     'http://localhost:5173',
     'http://localhost:5174',
-    'http://localhost:5175'
+    'http://localhost:5175',
+    // commonapp's plain-web dev server (npm run dev:web), see README.
+    'http://localhost:5176'
   ]),
   // Packaged Electron apps load from file:// and send "Origin: null".
   corsAllowNullOrigin: bool(process.env.CORS_ALLOW_NULL_ORIGIN, true),
@@ -76,7 +78,8 @@ const config = {
     otpRequestMax: int(process.env.RATE_LIMIT_OTP_REQUEST_MAX, 10),
     otpVerifyMax: int(process.env.RATE_LIMIT_OTP_VERIFY_MAX, 30),
     gateMax: int(process.env.RATE_LIMIT_GATE_MAX, 120),
-    apiMax: int(process.env.RATE_LIMIT_API_MAX, 600)
+    apiMax: int(process.env.RATE_LIMIT_API_MAX, 600),
+    communityPostMax: int(process.env.RATE_LIMIT_COMMUNITY_POST_MAX, 10)
   }
 }
 

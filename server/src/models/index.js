@@ -9,5 +9,7 @@ module.exports = {
   GateScan: require('./GateScan'),
   AuditLog: require('./AuditLog'),
   RevokedToken: require('./RevokedToken'),
-  EmailVerification: require('./EmailVerification')
+  EmailVerification: require('./EmailVerification'),
+  CommunityPost: require('./CommunityPost'),
+  CommunityComment: require('./CommunityComment')
 }
